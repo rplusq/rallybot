@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "crates/rallybot-types",
+    "crates/rallybot-core",
+    "crates/rallybot-db",
+    "crates/rallybot-cli",
+    "crates/rallybot-bot",
+    "crates/rallybot-config",
+    "crates/rallybot-error",
+    "crates/rallybot-utils"
+]
+

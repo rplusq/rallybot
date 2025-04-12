@@ -1,0 +1,4 @@
+[default]
+db_url = "postgres://localhost/rallybot"
+bot_token = "YOUR_TELEGRAM_BOT_TOKEN"
+league_name = "Rising League"

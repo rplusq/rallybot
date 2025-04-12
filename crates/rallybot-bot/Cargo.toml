@@ -1,0 +1,12 @@
+[package]
+name = "rallybot-bot"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+teloxide = "0.11"
+tokio = { version = "1", features = ["full"] }
+rallybot-types = { path = "../rallybot-types" }
+rallybot-core = { path = "../rallybot-core" }
+rallybot-db = { path = "../rallybot-db" }
+tracing = "0.1"

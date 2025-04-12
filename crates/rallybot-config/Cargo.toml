@@ -1,0 +1,8 @@
+[package]
+name = "rallybot-config"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+figment = "0.10"
+serde = { version = "1.0", features = ["derive"] }
