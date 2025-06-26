@@ -1,0 +1,99 @@
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
+    Router,
+};
+use rallybot_api::create_app_with_repository;
+use fake::{faker::*, Fake};
+use rallybot_core::{
+    Gender, InMemoryRepository, LookingFor, PlayFrequency, PreferredSide, SkillLevel, User,
+    UserRepository, Venue, VenueRepository,
+};
+use rand::{seq::SliceRandom, Rng};
+use std::sync::Arc;
+use tower::ServiceExt;
+use uuid::Uuid;
+
+pub struct TestApp {
+    pub app: Router,
+    pub repository: Arc<InMemoryRepository>,
+}
+
+impl TestApp {
+    pub async fn new() -> Self {
+        let repository = Arc::new(InMemoryRepository::new());
+        let app = create_app_with_repository(repository.clone());
+        
+        Self { app, repository }
+    }
+
+    pub async fn create_test_user(&self, phone: &str, approved: bool) -> Uuid {
+        let mut rng = rand::thread_rng();
+        
+        let user = User::new(
+            name::en::FirstName().fake(),
+            name::en::LastName().fake(),
+            phone.to_string(),
+            internet::en::FreeEmail().fake(),
+            address::en::CityName().fake(),
+            company::en::Profession().fake(),
+            company::en::CompanyName().fake(),
+            company::en::Industry().fake(),
+            format!("https://linkedin.com/in/{}", internet::en::Username().fake::<String>()),
+            if rng.gen_bool(0.5) { Gender::Male } else { Gender::Female },
+            vec![
+                *[SkillLevel::Beginner, SkillLevel::LowIntermediate, SkillLevel::Intermediate, 
+                  SkillLevel::UpperIntermediate, SkillLevel::Advanced]
+                    .choose(&mut rng)
+                    .unwrap()
+            ],
+            *[PreferredSide::Right, PreferredSide::Left, PreferredSide::Flexible]
+                .choose(&mut rng)
+                .unwrap(),
+            *[PlayFrequency::OnceWeek, PlayFrequency::SeveralTimesWeek, PlayFrequency::FewTimesMonth]
+                .choose(&mut rng)
+                .unwrap(),
+            vec![
+                *[LookingFor::SocialConnections, LookingFor::BusinessOpportunities]
+                    .choose(&mut rng)
+                    .unwrap()
+            ],
+        );
+        
+        let mut user = user;
+        user.is_approved = approved;
+        
+        let created = UserRepository::create(&*self.repository, user).await;
+        created.id
+    }
+
+    pub async fn create_test_venue(&self) -> Uuid {
+        self.create_test_venue_with_data(None, None).await
+    }
+
+    pub async fn create_test_venue_with_data(&self, name: Option<&str>, address: Option<&str>) -> Uuid {
+        let venue = Venue::new(
+            name.map(|s| s.to_string())
+                .unwrap_or_else(|| format!("{} Sports Center", company::en::CompanyName().fake::<String>())),
+            address.map(|s| s.to_string())
+                .unwrap_or_else(|| format!("{}, {}, {}", 
+                    address::en::StreetName().fake::<String>(),
+                    address::en::CityName().fake::<String>(),
+                    address::en::CountryName().fake::<String>()
+                )),
+        );
+        let created = VenueRepository::create(&*self.repository, venue).await;
+        created.id
+    }
+
+    pub async fn call(&self, request: Request<Body>) -> (StatusCode, String) {
+        let response = self.app.clone().oneshot(request).await.unwrap();
+        let status = response.status();
+        let body_bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        let body = String::from_utf8(body_bytes.to_vec()).unwrap();
+        
+        (status, body)
+    }
+}
