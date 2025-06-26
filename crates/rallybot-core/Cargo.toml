@@ -1,0 +1,11 @@
+[package]
+name = "rallybot-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1", features = ["sync"] }
+uuid = { version = "1.0", features = ["serde", "v4"] }

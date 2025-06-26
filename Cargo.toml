@@ -1,3 +1,6 @@
 [workspace]
-members = []
+members = [
+    "crates/rallybot-core",
+    "crates/rallybot-api",
+]
 resolver = "2"
