@@ -9,3 +9,7 @@ chrono = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
+
+[dev-dependencies]
+fake = { workspace = true }
+rand = { workspace = true }

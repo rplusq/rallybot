@@ -6,8 +6,8 @@ use axum::{
 use rallybot_api::create_app_with_repository;
 use fake::{faker::*, Fake};
 use rallybot_core::{
-    Gender, InMemoryRepository, LookingFor, PlayFrequency, PreferredSide, SkillLevel, User,
-    UserRepository, Venue, VenueRepository,
+    Gender, InMemoryStorage, LookingFor, PlayFrequency, PreferredSide, Repository, SkillLevel,
+    Storage, User, Venue,
 };
 use rand::{seq::SliceRandom, Rng};
 use std::sync::Arc;
@@ -16,17 +16,20 @@ use uuid::Uuid;
 
 pub struct TestApp {
     pub app: Router,
-    pub repository: Arc<InMemoryRepository>,
+    #[allow(dead_code)]
+    pub storage: Arc<InMemoryStorage>,
 }
 
 impl TestApp {
     pub async fn new() -> Self {
-        let repository = Arc::new(InMemoryRepository::new());
-        let app = create_app_with_repository(repository.clone());
+        let storage = Arc::new(InMemoryStorage::new());
+        let repository = Arc::new(Repository::new(storage.clone()));
+        let app = create_app_with_repository(repository);
         
-        Self { app, repository }
+        Self { app, storage }
     }
 
+    #[allow(dead_code)]
     pub async fn create_test_user(&self, phone: &str, approved: bool) -> Uuid {
         let mut rng = rand::thread_rng();
         
@@ -63,14 +66,16 @@ impl TestApp {
         let mut user = user;
         user.is_approved = approved;
         
-        let created = UserRepository::create(&*self.repository, user).await;
-        created.id
+        self.storage.create_user(user.clone()).await;
+        user.id
     }
 
+    #[allow(dead_code)]
     pub async fn create_test_venue(&self) -> Uuid {
         self.create_test_venue_with_data(None, None).await
     }
 
+    #[allow(dead_code)]
     pub async fn create_test_venue_with_data(&self, name: Option<&str>, address: Option<&str>) -> Uuid {
         let venue = Venue::new(
             name.map(|s| s.to_string())
@@ -82,8 +87,8 @@ impl TestApp {
                     address::en::CountryName().fake::<String>()
                 )),
         );
-        let created = VenueRepository::create(&*self.repository, venue).await;
-        created.id
+        self.storage.create_venue(venue.clone()).await;
+        venue.id
     }
 
     pub async fn call(&self, request: Request<Body>) -> (StatusCode, String) {

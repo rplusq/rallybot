@@ -4,7 +4,9 @@ use axum::{
     http::StatusCode,
     response::Json,
 };
-use rallybot_core::{Registration, RegistrationError, RegistrationStatus, Session, SessionType};
+use rallybot_core::{
+    Registration, RegistrationError, RegistrationStatus, Session, SessionError, SessionType,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -34,13 +36,6 @@ pub async fn create_session(
     State(state): State<AppState>,
     Json(payload): Json<CreateSessionRequest>,
 ) -> Result<(StatusCode, Json<Session>), StatusCode> {
-    // Verify venue exists
-    state
-        .venue_repository
-        .get(payload.venue_id)
-        .await
-        .ok_or(StatusCode::BAD_REQUEST)?;
-
     let session = Session::new(
         payload.session_type,
         payload.datetime,
@@ -49,8 +44,10 @@ pub async fn create_session(
     )
     .map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    let created = state.session_repository.create(session).await;
-    Ok((StatusCode::CREATED, Json(created)))
+    match state.session_repository.create(session).await {
+        Ok(created) => Ok((StatusCode::CREATED, Json(created))),
+        Err(SessionError::VenueNotFound) => Err(StatusCode::BAD_REQUEST),
+    }
 }
 
 #[derive(Deserialize)]

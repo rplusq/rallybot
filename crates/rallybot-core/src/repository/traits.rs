@@ -15,11 +15,16 @@ pub enum RegistrationError {
     AlreadyRegistered,
 }
 
+#[derive(Debug)]
+pub enum SessionError {
+    VenueNotFound,
+}
+
 #[async_trait::async_trait]
 pub trait SessionRepository: Send + Sync {
     async fn list(&self, session_type: Option<SessionType>) -> Vec<Session>;
     async fn get(&self, id: Uuid) -> Option<Session>;
-    async fn create(&self, session: Session) -> Session;
+    async fn create(&self, session: Session) -> Result<Session, SessionError>;
     async fn register_user(
         &self,
         session_id: Uuid,
@@ -80,10 +85,10 @@ impl SessionRepository for InMemoryRepository {
         sessions.iter().find(|s| s.id == id).cloned()
     }
 
-    async fn create(&self, session: Session) -> Session {
+    async fn create(&self, session: Session) -> Result<Session, SessionError> {
         let mut sessions = self.sessions.lock().await;
         sessions.push(session.clone());
-        session
+        Ok(session)
     }
 
     async fn register_user(
