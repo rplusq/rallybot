@@ -57,6 +57,16 @@ impl<S: Storage> SessionRepository for Repository<S> {
             .await
     }
 
+    async fn unregister_user(
+        &self,
+        session_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<(), RegistrationError> {
+        self.registration_service
+            .unregister_user(session_id, user_id)
+            .await
+    }
+
     async fn get_registrations(&self, session_id: Uuid) -> Vec<Registration> {
         self.registration_service
             .get_session_registrations(session_id)

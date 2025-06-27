@@ -71,6 +71,43 @@ impl<S: Storage> RegistrationService<S> {
         let registrations = self.storage.get_user_registrations(user_id).await;
         registrations.into_iter().map(|r| r.session_id).collect()
     }
+
+    pub async fn unregister_user(
+        &self,
+        session_id: Uuid,
+        user_id: Uuid,
+    ) -> Result<(), RegistrationError> {
+        // Get all registrations for this session
+        let registrations = self.storage.get_registrations(session_id).await;
+        
+        // Find the user's registration
+        let user_registration = registrations
+            .iter()
+            .find(|r| r.user_id == user_id)
+            .ok_or(RegistrationError::NotRegistered)?;
+        
+        let was_confirmed = user_registration.status == RegistrationStatus::Confirmed;
+        
+        // Delete the registration
+        if !self.storage.delete_registration(session_id, user_id).await {
+            return Err(RegistrationError::NotRegistered);
+        }
+        
+        // If user was confirmed, promote the oldest substitute
+        if was_confirmed {
+            if let Some(first_substitute) = registrations
+                .iter()
+                .filter(|r| r.status == RegistrationStatus::Substitute)
+                .min_by_key(|r| r.created_at)
+            {
+                let mut promoted = first_substitute.clone();
+                promoted.status = RegistrationStatus::Confirmed;
+                self.storage.update_registration(promoted).await;
+            }
+        }
+        
+        Ok(())
+    }
 }
 
 #[cfg(test)]

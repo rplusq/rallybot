@@ -8,7 +8,7 @@ pub mod user;
 pub use models::{Session, SessionType, Venue};
 pub use registration::{Registration, RegistrationStatus};
 pub use repository::{
-    InMemoryRepository, RegistrationError, Repository, SessionError, SessionRepository,
+    RegistrationError, Repository, SessionError, SessionRepository,
     UserRepository, VenueRepository,
 };
 pub use services::RegistrationService;

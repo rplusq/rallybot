@@ -23,6 +23,8 @@ pub trait Storage: Send + Sync {
     async fn get_user_registrations(&self, user_id: Uuid) -> Vec<Registration>;
     async fn create_registration(&self, registration: Registration);
     async fn registration_exists(&self, session_id: Uuid, user_id: Uuid) -> bool;
+    async fn delete_registration(&self, session_id: Uuid, user_id: Uuid) -> bool;
+    async fn update_registration(&self, registration: Registration) -> bool;
     
     // Venue operations
     async fn get_venue(&self, id: Uuid) -> Option<Venue>;
@@ -71,6 +73,14 @@ impl<S: Storage> Storage for Arc<S> {
 
     async fn registration_exists(&self, session_id: Uuid, user_id: Uuid) -> bool {
         (**self).registration_exists(session_id, user_id).await
+    }
+
+    async fn delete_registration(&self, session_id: Uuid, user_id: Uuid) -> bool {
+        (**self).delete_registration(session_id, user_id).await
+    }
+
+    async fn update_registration(&self, registration: Registration) -> bool {
+        (**self).update_registration(registration).await
     }
 
     async fn get_venue(&self, id: Uuid) -> Option<Venue> {

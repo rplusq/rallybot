@@ -5,7 +5,7 @@ use axum::{
     response::Json,
 };
 use rallybot_core::{
-    Registration, RegistrationError, RegistrationStatus, Session, SessionError, SessionType,
+    Registration, RegistrationError, RegistrationStatus, Session, SessionError, SessionType, Venue,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -14,6 +14,8 @@ use uuid::Uuid;
 pub struct ListSessionsQuery {
     #[serde(rename = "type")]
     pub session_type: Option<SessionType>,
+    #[serde(default)]
+    pub summary: bool,
 }
 
 #[derive(Deserialize)]
@@ -23,6 +25,7 @@ pub struct CreateSessionRequest {
     pub duration_minutes: i32,
     pub venue_id: Uuid,
 }
+
 
 pub async fn list_sessions(
     State(state): State<AppState>,
@@ -97,6 +100,60 @@ pub async fn register_for_session(
     };
 
     Ok(Json(RegisterResponse { status, message }))
+}
+
+#[derive(Deserialize)]
+pub struct UnregisterRequest {
+    pub user_id: Uuid,
+}
+
+pub async fn unregister_from_session(
+    State(state): State<AppState>,
+    Path(session_id): Path<Uuid>,
+    Json(payload): Json<UnregisterRequest>,
+) -> Result<StatusCode, StatusCode> {
+    match state.session_repository.unregister_user(session_id, payload.user_id).await {
+        Ok(()) => Ok(StatusCode::NO_CONTENT),
+        Err(RegistrationError::NotRegistered) => Err(StatusCode::NOT_FOUND),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+#[derive(Serialize)]
+pub struct SessionDetails {
+    #[serde(flatten)]
+    pub session: Session,
+    pub confirmed_count: usize,
+    pub substitute_count: usize,
+}
+
+pub async fn get_session_details(
+    State(state): State<AppState>,
+    Path(session_id): Path<Uuid>,
+) -> Result<Json<SessionDetails>, StatusCode> {
+    let session = state
+        .session_repository
+        .get(session_id)
+        .await
+        .ok_or(StatusCode::NOT_FOUND)?;
+    
+    let registrations = state.session_repository.get_registrations(session_id).await;
+    
+    let confirmed_count = registrations
+        .iter()
+        .filter(|r| r.status == RegistrationStatus::Confirmed)
+        .count();
+        
+    let substitute_count = registrations
+        .iter()
+        .filter(|r| r.status == RegistrationStatus::Substitute)
+        .count();
+    
+    Ok(Json(SessionDetails {
+        session,
+        confirmed_count,
+        substitute_count,
+    }))
 }
 
 pub async fn get_session_registrations(

@@ -1,7 +1,7 @@
 pub mod handlers;
 pub mod state;
 
-use axum::{routing::{get, post}, Router};
+use axum::{routing::{get, post, delete}, Router};
 use rallybot_core::{InMemoryStorage, Repository, Storage};
 use state::AppState;
 use std::sync::Arc;
@@ -24,8 +24,12 @@ pub fn create_app_with_repository<S: Storage + 'static>(
 
     Router::new()
         .route("/sessions", get(handlers::sessions::list_sessions).post(handlers::sessions::create_session))
+        .route("/sessions/:id", get(handlers::sessions::get_session_details))
         .route("/sessions/:id/register", post(handlers::sessions::register_for_session))
+        .route("/sessions/:id/unregister", delete(handlers::sessions::unregister_from_session))
         .route("/sessions/:id/registrations", get(handlers::sessions::get_session_registrations))
+        .route("/users", post(handlers::users::create_user))
+        .route("/users/:phone", get(handlers::users::get_user_by_phone))
         .route("/users/:phone/sessions", get(handlers::users::get_user_sessions))
         .route("/venues", get(handlers::venues::list_venues).post(handlers::venues::create_venue))
         .route("/health", get(handlers::health_check))

@@ -95,6 +95,25 @@ impl Storage for InMemoryStorage {
             .any(|r| r.session_id == session_id && r.user_id == user_id)
     }
 
+    async fn delete_registration(&self, session_id: Uuid, user_id: Uuid) -> bool {
+        let mut registrations = self.registrations.lock().await;
+        let initial_len = registrations.len();
+        registrations.retain(|r| !(r.session_id == session_id && r.user_id == user_id));
+        registrations.len() < initial_len
+    }
+
+    async fn update_registration(&self, registration: Registration) -> bool {
+        let mut registrations = self.registrations.lock().await;
+        if let Some(pos) = registrations.iter().position(|r| 
+            r.session_id == registration.session_id && r.user_id == registration.user_id
+        ) {
+            registrations[pos] = registration;
+            true
+        } else {
+            false
+        }
+    }
+
     async fn get_venue(&self, id: Uuid) -> Option<Venue> {
         let venues = self.venues.lock().await;
         venues.iter().find(|v| v.id == id).cloned()

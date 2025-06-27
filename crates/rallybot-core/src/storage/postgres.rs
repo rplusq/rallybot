@@ -235,6 +235,39 @@ impl Storage for PostgresStorage {
         .unwrap_or(false)
     }
 
+    async fn delete_registration(&self, session_id: Uuid, user_id: Uuid) -> bool {
+        sqlx::query!(
+            r#"
+            DELETE FROM registrations
+            WHERE session_id = $1 AND user_id = $2
+            "#,
+            session_id,
+            user_id
+        )
+        .execute(&self.pool)
+        .await
+        .map(|result| result.rows_affected() > 0)
+        .unwrap_or(false)
+    }
+
+    async fn update_registration(&self, registration: Registration) -> bool {
+        sqlx::query!(
+            r#"
+            UPDATE registrations
+            SET status = $3, created_at = $4
+            WHERE session_id = $1 AND user_id = $2
+            "#,
+            registration.session_id,
+            registration.user_id,
+            registration.status as RegistrationStatus,
+            registration.created_at
+        )
+        .execute(&self.pool)
+        .await
+        .map(|result| result.rows_affected() > 0)
+        .unwrap_or(false)
+    }
+
     async fn get_venue(&self, id: Uuid) -> Option<Venue> {
         sqlx::query_as!(
             Venue,

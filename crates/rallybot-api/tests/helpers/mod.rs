@@ -68,6 +68,7 @@ impl TestApp {
             phone.to_string(),
             internet::en::FreeEmail().fake(),
             address::en::CityName().fake(),
+            None, // photo_url
             company::en::Profession().fake(),
             company::en::CompanyName().fake(),
             company::en::Industry().fake(),
