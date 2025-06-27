@@ -18,7 +18,8 @@ async fn register_for_session_returns_confirmed() {
         "session_type": "S",
         "datetime": "2024-12-31T18:00:00Z",
         "duration_minutes": 90,
-        "venue_id": venue_id
+        "venue_id": venue_id,
+        "skill_level": "C"
     });
     
     let request = Request::builder()
@@ -65,7 +66,8 @@ async fn register_with_unapproved_user_returns_403() {
         "session_type": "S",
         "datetime": "2024-12-31T18:00:00Z",
         "duration_minutes": 90,
-        "venue_id": venue_id
+        "venue_id": venue_id,
+        "skill_level": "C"
     });
     
     let request = Request::builder()
@@ -108,7 +110,8 @@ async fn fifth_registration_becomes_substitute() {
         "session_type": "S",
         "datetime": "2024-12-31T18:00:00Z",
         "duration_minutes": 90,
-        "venue_id": venue_id
+        "venue_id": venue_id,
+        "skill_level": "C"
     });
     
     let request = Request::builder()
@@ -176,7 +179,8 @@ async fn double_registration_returns_conflict() {
         "session_type": "S",
         "datetime": "2024-12-31T18:00:00Z",
         "duration_minutes": 90,
-        "venue_id": venue_id
+        "venue_id": venue_id,
+        "skill_level": "C"
     });
     
     let request = Request::builder()

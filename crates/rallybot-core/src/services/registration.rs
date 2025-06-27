@@ -142,6 +142,7 @@ mod tests {
             Utc::now() + chrono::Duration::days(1),
             90,
             venue.id,
+            Some(SkillLevel::Intermediate),
         ).expect("Valid session");
         storage.create_session(session).await;
         

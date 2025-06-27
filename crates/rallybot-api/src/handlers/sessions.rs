@@ -6,6 +6,7 @@ use axum::{
 };
 use rallybot_core::{
     Registration, RegistrationError, RegistrationStatus, Session, SessionError, SessionType,
+    SkillLevel,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -24,8 +25,8 @@ pub struct CreateSessionRequest {
     pub datetime: chrono::DateTime<chrono::Utc>,
     pub duration_minutes: i32,
     pub venue_id: Uuid,
+    pub skill_level: Option<SkillLevel>,
 }
-
 
 pub async fn list_sessions(
     State(state): State<AppState>,
@@ -44,6 +45,7 @@ pub async fn create_session(
         payload.datetime,
         payload.duration_minutes,
         payload.venue_id,
+        payload.skill_level,
     )
     .map_err(|_| StatusCode::BAD_REQUEST)?;
 
@@ -91,7 +93,10 @@ pub async fn register_for_session(
             RegistrationError::AlreadyRegistered => {
                 (StatusCode::CONFLICT, "Already registered".to_string())
             }
-            _ => (StatusCode::INTERNAL_SERVER_ERROR, "Registration failed".to_string()),
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Registration failed".to_string(),
+            ),
         })?;
 
     let message = match status {
@@ -112,7 +117,11 @@ pub async fn unregister_from_session(
     Path(session_id): Path<Uuid>,
     Json(payload): Json<UnregisterRequest>,
 ) -> Result<StatusCode, StatusCode> {
-    match state.session_repository.unregister_user(session_id, payload.user_id).await {
+    match state
+        .session_repository
+        .unregister_user(session_id, payload.user_id)
+        .await
+    {
         Ok(()) => Ok(StatusCode::NO_CONTENT),
         Err(RegistrationError::NotRegistered) => Err(StatusCode::NOT_FOUND),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
@@ -136,19 +145,19 @@ pub async fn get_session_details(
         .get(session_id)
         .await
         .ok_or(StatusCode::NOT_FOUND)?;
-    
+
     let registrations = state.session_repository.get_registrations(session_id).await;
-    
+
     let confirmed_count = registrations
         .iter()
         .filter(|r| r.status == RegistrationStatus::Confirmed)
         .count();
-        
+
     let substitute_count = registrations
         .iter()
         .filter(|r| r.status == RegistrationStatus::Substitute)
         .count();
-    
+
     Ok(Json(SessionDetails {
         session,
         confirmed_count,

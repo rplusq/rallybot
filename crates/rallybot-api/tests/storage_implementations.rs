@@ -36,7 +36,8 @@ async fn run_basic_flow(app: helpers::TestApp) {
             "session_type": SessionType::Social,
             "datetime": session_datetime,
             "duration_minutes": 90,
-            "venue_id": venue_id
+            "venue_id": venue_id,
+            "skill_level": "C"
         }).to_string()))
         .unwrap();
     

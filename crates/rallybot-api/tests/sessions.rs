@@ -17,7 +17,8 @@ async fn create_session_returns_201() {
         "session_type": "S",
         "datetime": "2024-12-31T18:00:00Z",
         "duration_minutes": 90,
-        "venue_id": venue_id
+        "venue_id": venue_id,
+        "skill_level": "D"
     });
     
     let request = Request::builder()
@@ -46,7 +47,8 @@ async fn create_session_with_invalid_venue_returns_400() {
         "session_type": "S",
         "datetime": "2024-12-31T18:00:00Z",
         "duration_minutes": 90,
-        "venue_id": "00000000-0000-0000-0000-000000000000"
+        "venue_id": "00000000-0000-0000-0000-000000000000",
+        "skill_level": "D"
     });
     
     let request = Request::builder()
@@ -72,7 +74,8 @@ async fn create_session_with_invalid_duration_returns_400() {
         "session_type": "S",
         "datetime": "2024-12-31T18:00:00Z",
         "duration_minutes": 45, // Invalid: not in 30 min increments
-        "venue_id": venue_id
+        "venue_id": venue_id,
+        "skill_level": "D"
     });
     
     let request = Request::builder()
@@ -115,7 +118,8 @@ async fn list_sessions_filters_by_type() {
         "session_type": "C",
         "datetime": "2024-12-30T10:00:00Z",
         "duration_minutes": 90,
-        "venue_id": venue1
+        "venue_id": venue1,
+        "skill_level": "B"
     });
     
     let request = Request::builder()
@@ -132,7 +136,8 @@ async fn list_sessions_filters_by_type() {
         "session_type": "S",
         "datetime": "2024-12-31T18:00:00Z",
         "duration_minutes": 60,
-        "venue_id": venue2
+        "venue_id": venue2,
+        "skill_level": "D"
     });
     
     let request = Request::builder()
@@ -157,4 +162,34 @@ async fn list_sessions_filters_by_type() {
     let sessions: Vec<Value> = serde_json::from_str(&body).unwrap();
     assert_eq!(sessions.len(), 1);
     assert_eq!(sessions[0]["session_type"], "S");
+}
+
+#[tokio::test]
+async fn create_session_includes_skill_level_in_response() {
+    let app = helpers::TestApp::new().await;
+    
+    // First create a venue
+    let venue_id = app.create_test_venue().await;
+    
+    let body = json!({
+        "session_type": "L",
+        "datetime": "2024-12-31T18:00:00Z",
+        "duration_minutes": 90,
+        "venue_id": venue_id,
+        "skill_level": "E"
+    });
+    
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/sessions")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&body).unwrap()))
+        .unwrap();
+    
+    let (status, body) = app.call(request).await;
+    
+    assert_eq!(status, StatusCode::CREATED);
+    
+    let response: Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(response["skill_level"], "E");
 }

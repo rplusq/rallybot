@@ -44,6 +44,7 @@ mod tests {
     use crate::{
         models::{SessionType, Venue},
         storage::InMemoryStorage,
+        user::SkillLevel,
     };
     use chrono::Utc;
 
@@ -59,10 +60,10 @@ mod tests {
         
         // Create various sessions
         let sessions = vec![
-            Session::new(SessionType::Social, Utc::now(), 90, venue.id).unwrap(),
-            Session::new(SessionType::Coaching, Utc::now(), 60, venue.id).unwrap(),
-            Session::new(SessionType::Social, Utc::now(), 120, venue.id).unwrap(),
-            Session::new(SessionType::League, Utc::now(), 90, venue.id).unwrap(),
+            Session::new(SessionType::Social, Utc::now(), 90, venue.id, Some(SkillLevel::Intermediate)).unwrap(),
+            Session::new(SessionType::Coaching, Utc::now(), 60, venue.id, Some(SkillLevel::Beginner)).unwrap(),
+            Session::new(SessionType::Social, Utc::now(), 120, venue.id, Some(SkillLevel::Advanced)).unwrap(),
+            Session::new(SessionType::League, Utc::now(), 90, venue.id, Some(SkillLevel::UpperIntermediate)).unwrap(),
         ];
         
         for session in sessions {
@@ -101,6 +102,7 @@ mod tests {
             Utc::now(),
             90,
             venue.id,
+            Some(SkillLevel::Intermediate),
         ).unwrap();
         
         let result = service.create_session(session.clone()).await;
@@ -122,6 +124,7 @@ mod tests {
             Utc::now(),
             90,
             fake_venue_id,
+            Some(SkillLevel::Intermediate),
         ).unwrap();
         
         let result = service.create_session(session).await;

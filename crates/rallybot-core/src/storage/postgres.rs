@@ -2,9 +2,9 @@ use super::Storage;
 use crate::{
     models::{Session, SessionType, Venue},
     registration::{Registration, RegistrationStatus},
-    user::{User, Gender, SkillLevel, PreferredSide, PlayFrequency, LookingFor},
+    user::{Gender, LookingFor, PlayFrequency, PreferredSide, SkillLevel, User},
 };
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -18,10 +18,10 @@ impl PostgresStorage {
             .max_connections(5)
             .connect(database_url)
             .await?;
-        
+
         Ok(Self { pool })
     }
-    
+
     pub fn new_with_pool(pool: PgPool) -> Self {
         Self { pool }
     }
@@ -33,7 +33,7 @@ impl Storage for PostgresStorage {
         sqlx::query_as!(
             Session,
             r#"
-            SELECT id, session_type as "session_type: SessionType", datetime, duration_minutes, venue_id
+            SELECT id, session_type as "session_type: SessionType", datetime, duration_minutes, venue_id, skill_level as "skill_level: SkillLevel"
             FROM sessions
             WHERE id = $1
             "#,
@@ -51,7 +51,7 @@ impl Storage for PostgresStorage {
                 sqlx::query_as!(
                     Session,
                     r#"
-                    SELECT id, session_type as "session_type: SessionType", datetime, duration_minutes, venue_id
+                    SELECT id, session_type as "session_type: SessionType", datetime, duration_minutes, venue_id, skill_level as "skill_level: SkillLevel"
                     FROM sessions
                     WHERE session_type = $1
                     ORDER BY datetime
@@ -66,7 +66,7 @@ impl Storage for PostgresStorage {
                 sqlx::query_as!(
                     Session,
                     r#"
-                    SELECT id, session_type as "session_type: SessionType", datetime, duration_minutes, venue_id
+                    SELECT id, session_type as "session_type: SessionType", datetime, duration_minutes, venue_id, skill_level as "skill_level: SkillLevel"
                     FROM sessions
                     ORDER BY datetime
                     "#
@@ -81,14 +81,15 @@ impl Storage for PostgresStorage {
     async fn create_session(&self, session: Session) {
         let _ = sqlx::query!(
             r#"
-            INSERT INTO sessions (id, session_type, datetime, duration_minutes, venue_id)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO sessions (id, session_type, datetime, duration_minutes, venue_id, skill_level)
+            VALUES ($1, $2, $3, $4, $5, $6)
             "#,
             session.id,
             session.session_type as SessionType,
             session.datetime,
             session.duration_minutes as i32,
-            session.venue_id
+            session.venue_id,
+            session.skill_level as _
         )
         .execute(&self.pool)
         .await;
@@ -281,13 +282,10 @@ impl Storage for PostgresStorage {
     }
 
     async fn list_venues(&self) -> Vec<Venue> {
-        sqlx::query_as!(
-            Venue,
-            "SELECT id, name, address FROM venues ORDER BY name"
-        )
-        .fetch_all(&self.pool)
-        .await
-        .unwrap_or_default()
+        sqlx::query_as!(Venue, "SELECT id, name, address FROM venues ORDER BY name")
+            .fetch_all(&self.pool)
+            .await
+            .unwrap_or_default()
     }
 
     async fn create_venue(&self, venue: Venue) {
