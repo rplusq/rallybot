@@ -5,7 +5,7 @@ use axum::{
     response::Json,
 };
 use rallybot_core::{
-    Registration, RegistrationError, RegistrationStatus, Session, SessionError, SessionType, Venue,
+    Registration, RegistrationError, RegistrationStatus, Session, SessionError, SessionType,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
