@@ -1,3 +1,5 @@
+mod config;
+
 use axum::{
     body::Body,
     http::{Request, StatusCode},
@@ -6,27 +8,54 @@ use axum::{
 use rallybot_api::create_app_with_repository;
 use fake::{faker::*, Fake};
 use rallybot_core::{
-    Gender, InMemoryStorage, LookingFor, PlayFrequency, PreferredSide, Repository, SkillLevel,
-    Storage, User, Venue,
+    Gender, InMemoryStorage, LookingFor, PlayFrequency, PostgresStorage, PreferredSide, 
+    Repository, SkillLevel, Storage, User, Venue,
 };
 use rand::{seq::SliceRandom, Rng};
 use std::sync::Arc;
 use tower::ServiceExt;
 use uuid::Uuid;
 
+pub use config::{StorageType, TestDatabase};
+
 pub struct TestApp {
     pub app: Router,
-    #[allow(dead_code)]
-    pub storage: Arc<InMemoryStorage>,
+    pub storage: Arc<dyn Storage>,
+    pub test_db: Option<TestDatabase>,
 }
 
 impl TestApp {
     pub async fn new() -> Self {
+        match StorageType::from_env() {
+            StorageType::InMemory => Self::with_in_memory().await,
+            StorageType::Postgres => Self::with_postgres().await,
+        }
+    }
+    
+    pub async fn with_in_memory() -> Self {
         let storage = Arc::new(InMemoryStorage::new());
         let repository = Arc::new(Repository::new(storage.clone()));
         let app = create_app_with_repository(repository);
         
-        Self { app, storage }
+        Self { 
+            app, 
+            storage: storage as Arc<dyn Storage>,
+            test_db: None,
+        }
+    }
+    
+    pub async fn with_postgres() -> Self {
+        let test_db = TestDatabase::new().await;
+        let pool = test_db.get_pool().await;
+        let storage = Arc::new(PostgresStorage::new_with_pool(pool));
+        let repository = Arc::new(Repository::new(storage.clone()));
+        let app = create_app_with_repository(repository);
+        
+        Self { 
+            app, 
+            storage: storage as Arc<dyn Storage>,
+            test_db: Some(test_db),
+        }
     }
 
     #[allow(dead_code)]
@@ -100,5 +129,13 @@ impl TestApp {
         let body = String::from_utf8(body_bytes.to_vec()).unwrap();
         
         (status, body)
+    }
+}
+
+impl TestApp {
+    pub async fn cleanup(mut self) {
+        if let Some(test_db) = self.test_db.take() {
+            test_db.cleanup().await;
+        }
     }
 }

@@ -3,62 +3,86 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Player skill level in padel
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, sqlx::Type)]
+#[sqlx(type_name = "skill_level")]
 pub enum SkillLevel {
     /// A - Beginner: New to padel, learning basic shots, positioning, and rules
     #[serde(rename = "A")]
+    #[sqlx(rename = "A")]
     Beginner,
     /// B - Low Intermediate (M6/F6): Can sustain short rallies, understands basic tactics but lacks consistency
     #[serde(rename = "B")]
+    #[sqlx(rename = "B")]
     LowIntermediate,
     /// C - Intermediate (M5/F5): Has reasonable consistency on forehand and backhand, understands positioning but struggles with faster-paced play
     #[serde(rename = "C")]
+    #[sqlx(rename = "C")]
     Intermediate,
     /// D - Upper-Intermediate (M4/F4): More consistent, beginning to use lobs, volleys, and tactical positioning effectively
     #[serde(rename = "D")]
+    #[sqlx(rename = "D")]
     UpperIntermediate,
     /// E - Advanced (M4+/F4+): Good control, can vary shots, comfortable at the net, and understands offensive/defensive transitions
     #[serde(rename = "E")]
+    #[sqlx(rename = "E")]
     Advanced,
     /// F - High Advanced (M3/F3): Strong tactical awareness, executes smashes, viboras, and bandejas effectively, can handle high-paced play
     #[serde(rename = "F")]
+    #[sqlx(rename = "F")]
     HighAdvanced,
     /// G - Expert (M2/F2): Very strong in all areas, plays fast-paced matches with high consistency and tactical intelligence
     #[serde(rename = "G")]
+    #[sqlx(rename = "G")]
     Expert,
     /// H - Elite (M1/F1): Tournament-level player, highly skilled in strategy, shot placement, and game psychology
     #[serde(rename = "H")]
+    #[sqlx(rename = "H")]
     Elite,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
 #[serde(rename_all = "lowercase")]
+#[sqlx(type_name = "gender")]
 pub enum Gender {
+    #[sqlx(rename = "Male")]
     Male,
+    #[sqlx(rename = "Female")]
     Female
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
 #[serde(rename_all = "lowercase")]
+#[sqlx(type_name = "preferred_side")]
 pub enum PreferredSide {
+    #[sqlx(rename = "Right")]
     Right,
+    #[sqlx(rename = "Left")]
     Left,
+    #[sqlx(rename = "Flexible")]
     Flexible,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
 #[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "play_frequency")]
 pub enum PlayFrequency {
+    #[sqlx(rename = "NeverPlayed")]
     NeverPlayed,
+    #[sqlx(rename = "FewTimesMonth")]
     FewTimesMonth,
+    #[sqlx(rename = "OnceWeek")]
     OnceWeek,
+    #[sqlx(rename = "SeveralTimesWeek")]
     SeveralTimesWeek,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
 #[serde(rename_all = "snake_case")]
+#[sqlx(type_name = "looking_for")]
 pub enum LookingFor {
+    #[sqlx(rename = "BusinessOpportunities")]
     BusinessOpportunities,
+    #[sqlx(rename = "SocialConnections")]
     SocialConnections,
 }
 

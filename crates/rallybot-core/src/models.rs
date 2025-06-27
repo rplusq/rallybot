@@ -2,16 +2,21 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, sqlx::Type)]
 #[serde(rename_all = "UPPERCASE")]
+#[sqlx(type_name = "session_type")]
 pub enum SessionType {
     #[serde(rename = "C")]
+    #[sqlx(rename = "C")]
     Coaching,
     #[serde(rename = "S")]
+    #[sqlx(rename = "S")]
     Social,
     #[serde(rename = "L")]
+    #[sqlx(rename = "L")]
     League,
     #[serde(rename = "X")]
+    #[sqlx(rename = "X")]
     Mixed,
 }
 
@@ -37,7 +42,7 @@ pub struct Session {
     pub id: Uuid,
     pub session_type: SessionType,
     pub datetime: DateTime<Utc>,
-    pub duration_minutes: u32,
+    pub duration_minutes: i32,
     pub venue_id: Uuid,
 }
 
@@ -45,7 +50,7 @@ impl Session {
     pub fn new(
         session_type: SessionType,
         datetime: DateTime<Utc>,
-        duration_minutes: u32,
+        duration_minutes: i32,
         venue_id: Uuid,
     ) -> Result<Self, &'static str> {
         if duration_minutes < 60 || duration_minutes > 120 {

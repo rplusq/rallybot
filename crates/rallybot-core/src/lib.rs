@@ -12,5 +12,5 @@ pub use repository::{
     UserRepository, VenueRepository,
 };
 pub use services::RegistrationService;
-pub use storage::{InMemoryStorage, Storage};
+pub use storage::{InMemoryStorage, PostgresStorage, Storage};
 pub use user::{Gender, LookingFor, PlayFrequency, PreferredSide, SkillLevel, User};

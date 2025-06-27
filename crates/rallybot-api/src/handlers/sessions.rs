@@ -20,7 +20,7 @@ pub struct ListSessionsQuery {
 pub struct CreateSessionRequest {
     pub session_type: SessionType,
     pub datetime: chrono::DateTime<chrono::Utc>,
-    pub duration_minutes: u32,
+    pub duration_minutes: i32,
     pub venue_id: Uuid,
 }
 

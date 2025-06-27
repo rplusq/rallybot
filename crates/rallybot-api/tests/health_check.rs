@@ -17,4 +17,6 @@ async fn health_check_works() {
     let (status, _body) = app.call(request).await;
     
     assert_eq!(status, StatusCode::OK);
+    
+    app.cleanup().await;
 }
